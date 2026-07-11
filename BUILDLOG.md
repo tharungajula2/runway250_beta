@@ -81,3 +81,12 @@
   - **Layout and Regression**: Fixed Next.js build compilation errors by converting `/about` into a client-boundary page. Verified compilation passes cleanly with exit code 0.
 - **Decisions**: Linked sound activation directly to the store's `soundEnabled` toggle (default ON), silencing all sound synthesis immediately if disabled. Used mount detection hooks for the Journey page scrubber to prevent triggering tick sound effects during initial page load.
 
+## Phase 14: Verification, Demo Preparation, and Launch
+- **Built**: Completed a full end-to-end QA sweep across all application interfaces, certifying:
+  - **Fresh-Install & Onboarding**: Smooth progression through Landing page promises, interactive pillar card selection, static-calibrating range sliders, orbit assembly animation, and Day 1 initiation.
+  - **Daily Ritual & Riddle Solve**: Verified quest check-off blur transitions, terminal reflection logger, unsealing the riddle card, correct string decryption using character-block focus sharpening, and resolution bonus calculations.
+  - **Sensory & Audio Logic**: Confirmed synthesizers (marimba blips, ascending chords, envelope noises, scrubber ticks, and low drones) execute clean Web Audio API calls.
+  - **PWA Integrity**: Verified serwist service worker asset caching operates correctly, and PWA assets load.
+  - **Dual-Mode & Terminology Law**: Verified that Game Mode hides all pitch indicators and guards route boundaries correctly, and that Pitch Mode unlocks the diagnostic details. Grep verification confirmed zero occurrences of banned vocabulary in player-visible strings.
+  - **Demo Scripts**: Authored `DEMO.md` containing dedicated guides for a 3-minute Family/Friend demo and a 5-minute Technical demo.
+- **Decisions**: Committed and pushed all changes to `main`, triggering Vercel production build validation.
