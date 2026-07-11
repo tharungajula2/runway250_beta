@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRunwayStore } from "@/store/useRunwayStore";
 import Card from "@/components/Card";
 import QuestTile from "@/components/QuestTile";
@@ -42,9 +42,24 @@ export default function Today() {
   const startRes = prevRecord ? prevRecord.resolutionPct : 0.0;
   const endRes = staticRecord.resolutionPct;
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutIdRef = useRef<any>(null);
+
   const fetchLiveQuests = async (energyVal = energyLevel) => {
+    // Cancel any previous pending request & timeout
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+    }
+
     setLoadingLive(true);
     
+    // Create new abort controller and store in ref
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     // Get recent history (previous 7 days)
     const prevDays = journeyData.days.slice(
       Math.max(0, currentDay - 8),
@@ -54,8 +69,10 @@ export default function Today() {
       .map((d: any) => `Day ${d.day}: ${d.quests.filter((q: any) => q.done).map((q: any) => q.text).join(", ")}`)
       .join("\n");
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    // Set 6-second timeout to abort the controller
+    timeoutIdRef.current = setTimeout(() => {
+      controller.abort();
+    }, 6000);
 
     try {
       const activePillars = selectedPillars && selectedPillars.length > 0
@@ -73,11 +90,20 @@ export default function Today() {
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
+      // If aborted/cancelled during fetch, exit silently
+      if (controller.signal.aborted) return;
+
+      // Clear timeout upon successful response
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
 
       if (!res.ok) throw new Error(`API error: status ${res.status}`);
 
       const data = await res.json();
+      if (controller.signal.aborted) return;
+
       if (data.quests && Array.isArray(data.quests)) {
         // Normalize
         const normalized = data.quests.map((q: any, idx: number) => {
@@ -109,6 +135,11 @@ export default function Today() {
         throw new Error("Invalid structure returned");
       }
     } catch (err: any) {
+      // Ignore if this is not the active controller anymore
+      if (controller.signal.aborted && abortControllerRef.current !== controller) {
+        return;
+      }
+
       console.warn("QUEST_API_FALLBACK_TRIGGERED:", err.message || err);
       // Fallback silently to static quests
       const fallbackQuests = staticRecord.quests.map((q: any) => ({
@@ -117,7 +148,15 @@ export default function Today() {
       }));
       setQuestsList(fallbackQuests);
     } finally {
-      setLoadingLive(false);
+      // Clean up refs and loading state if this is still the active request
+      if (abortControllerRef.current === controller) {
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
+        setLoadingLive(false);
+        abortControllerRef.current = null;
+      }
     }
   };
 
@@ -148,6 +187,16 @@ export default function Today() {
     }
 
     setReflectionText(staticRecord.reflection);
+
+    // Clean up abort controller and timeout when effect unmounts or restarts
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+    };
   }, [currentDay, liveAI, isSessionLocked, staticRecord]);
 
   // Handle toggling completion of a quest
