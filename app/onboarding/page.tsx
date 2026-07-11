@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRunwayStore } from "@/store/useRunwayStore";
 import Card from "@/components/Card";
 import { Dumbbell, Brain, Code, MessageSquare, Sparkles, Heart, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import PageTransition from "@/components/PageTransition";
 
 type Pillar = "Body" | "Mind" | "Craft" | "Voice" | "Order" | "Bonds";
 
@@ -358,8 +359,10 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="flex flex-col flex-1 justify-center py-4 min-h-[80vh]">
-      {renderStep()}
-    </div>
+    <PageTransition>
+      <div className="flex flex-col flex-1 justify-center py-4 min-h-[80vh]">
+        {renderStep()}
+      </div>
+    </PageTransition>
   );
 }

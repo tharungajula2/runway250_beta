@@ -10,6 +10,7 @@ import journeyData from "@/lib/data/journey.json";
 import { ArrowRight, RefreshCw, Smartphone } from "lucide-react";
 import Link from "next/link";
 import PixelAvatar from "@/components/PixelAvatar";
+import PageTransition from "@/components/PageTransition";
 
 type LoopState = "QUESTS" | "REFLECTION" | "RESOLVING" | "COMPLETED";
 
@@ -399,11 +400,13 @@ export default function Today() {
   };
 
   return (
-    <div className="flex flex-col gap-6 py-4">
-      {/* Session Timer (Only show when not fully completed or soft-locked) */}
-      {loopState !== "COMPLETED" && <SessionTimer />}
+    <PageTransition>
+      <div className="flex flex-col gap-6 py-4">
+        {/* Session Timer (Only show when not fully completed or soft-locked) */}
+        {loopState !== "COMPLETED" && <SessionTimer />}
 
-      {renderContent()}
-    </div>
+        {renderContent()}
+      </div>
+    </PageTransition>
   );
 }

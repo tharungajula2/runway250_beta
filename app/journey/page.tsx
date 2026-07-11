@@ -7,6 +7,7 @@ import PixelAvatar from "@/components/PixelAvatar";
 import MilestoneBadge from "@/components/MilestoneBadge";
 import journeyData from "@/lib/data/journey.json";
 import { Play, Pause, RotateCcw, Calendar, Flame, Target, Trophy } from "lucide-react";
+import PageTransition from "@/components/PageTransition";
 
 export default function Journey() {
   const { currentDay, setCurrentDay, setSessionLocked } = useRunwayStore();
@@ -92,7 +93,8 @@ export default function Journey() {
   };
 
   return (
-    <div className="flex flex-col gap-6 py-6 text-left max-w-md mx-auto w-full">
+    <PageTransition>
+      <div className="flex flex-col gap-6 py-6 text-left max-w-md mx-auto w-full">
       <div>
         <h1 className="text-2xl font-black tracking-tight text-teal font-heading">
           Identity Journey
@@ -232,5 +234,6 @@ export default function Journey() {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

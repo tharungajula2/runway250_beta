@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Card from "@/components/Card";
+import PageTransition from "@/components/PageTransition";
 import journeyData from "@/lib/data/journey.json";
 import { mockCohortData } from "@/lib/data/mockCohort";
 import {
@@ -130,7 +131,8 @@ export default function Analytics() {
   };
 
   return (
-    <div className="flex flex-col gap-6 py-6 text-left max-w-md mx-auto w-full pb-20">
+    <PageTransition>
+      <div className="flex flex-col gap-6 py-6 text-left max-w-md mx-auto w-full pb-20">
       <div>
         <h1 className="text-2xl font-black tracking-tight text-teal font-heading">
           Behavior Analytics
@@ -384,5 +386,6 @@ export default function Analytics() {
         </div>
       </Card>
     </div>
+    </PageTransition>
   );
 }

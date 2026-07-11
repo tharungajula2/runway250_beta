@@ -4,6 +4,7 @@ import { useRunwayStore } from "@/store/useRunwayStore";
 import Card from "@/components/Card";
 import journeyData from "@/lib/data/journey.json";
 import { Sliders, Sun, Moon, Sparkles, RefreshCcw, HelpCircle } from "lucide-react";
+import PageTransition from "@/components/PageTransition";
 
 export default function Settings() {
   const {
@@ -36,7 +37,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex flex-col gap-6 py-6 text-left max-w-md mx-auto w-full">
+    <PageTransition>
+      <div className="flex flex-col gap-6 py-6 text-left max-w-md mx-auto w-full">
       <div>
         <h1 className="text-2xl font-black tracking-tight text-teal font-heading">
           Settings & Scrubber
@@ -161,5 +163,6 @@ export default function Settings() {
         </button>
       </Card>
     </div>
+    </PageTransition>
   );
 }

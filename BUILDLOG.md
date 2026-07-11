@@ -29,3 +29,6 @@
 - **Decisions**: Defaulted client fallback to static JSON-generated quests upon fetch abort or network errors to ensure zero disruptive offline failures. Utilized CSS/UI state updates to render the pulsing `LiveAIChip` whenever live API content is retrieved.
 
 
+## Phase 7: PWA and Polish
+- **Built**: Configured full Serwist PWA setup with `next.config.ts` configuration and custom service worker in `app/sw.ts`. Created `app/manifest.ts` with PWA manifest properties and generated the 192px and 512px brand mark PWA icons programmatically. Created an offline fallback page at `app/~offline/page.tsx` with custom brand styling and offline messaging. Refined animation transitions and page motions to honor `useReducedMotion` across all core templates. Resolved Framer Motion compilation type issues in `MilestoneBadge` and `PageTransition` to enable a successful Next.js production compilation. Tested the entire user flow from landing, onboarding, daily quest completion, timeline scrubbing, and dark mode toggles with clean console outputs.
+- **Decisions**: Upgraded the service worker from the deprecated `@serwist/sw` `installSerwist` function to the modern Serwist v9 `Serwist` class constructor (`new Serwist(...)` and `serwist.addEventListeners()`) to prevent webpack resolution errors during the production build.
