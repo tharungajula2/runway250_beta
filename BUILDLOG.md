@@ -90,3 +90,29 @@
   - **Dual-Mode & Terminology Law**: Verified that Game Mode hides all pitch indicators and guards route boundaries correctly, and that Pitch Mode unlocks the diagnostic details. Grep verification confirmed zero occurrences of banned vocabulary in player-visible strings.
   - **Demo Scripts**: Authored `DEMO.md` containing dedicated guides for a 3-minute Family/Friend demo and a 5-minute Technical demo.
 - **Decisions**: Committed and pushed all changes to `main`, triggering Vercel production build validation.
+
+## Phase 15: Day 250 Cinematic Finale Ending Sequence
+- **Built**: Fully implemented the emotional finale sequence for players completing Day 250:
+  - **Audio Drone Synthesis**: Expanded `src/lib/game/audio.ts` with `startEndingDrone()` and `stopEndingDrone()` to procedurally synthesize a warm, low 90Hz ambient sine drone with 1s fade-in and 0.5s fade-out.
+  - **Ending Sequence Overlay (`EndingSequence.tsx`)**: Created the fullscreen overlay component implementing cinematic step progressions:
+    - **Fade Out**: Fades the active daily checklist screen to dark with ambient low-frequency audio.
+    - **Intro**: Typewriter text displays IRIS lines: *"Do you remember this person?"* $\rightarrow$ *"All static. Could barely see you."* alongside a fully blurred Day 1 avatar.
+    - **Rendering Auto-scrub**: Performs a 20-second dynamic fast-forward rendering animation, scrubbing from Day 1 to Day 250, resolving the pixelated avatar live, and displaying Act title captions.
+    - **Outro**: Displays IRIS typewriter summaries: *"Day 1, you couldn't see yourself."* $\rightarrow$ *"Look at you now."* $\rightarrow$ *"All signal."*
+    - **Monospace Film Credits**: A vertical scrolling credits layout pulling stats dynamically (quests done, shields triggered with dates, milestone dates, custom reflection quotes from the player's journey, and creator logs), ending with a pulsing *"RUNWAY 250 — Player: Founder. Rendered."* card.
+    - **Final Controls**: Offers choice to reset and play again (`Begin a new Runway (NG+)`), return to today (`[ Go to Dashboard ]`), or enter a screen-clearing ambient art saver (`Sit here a while`).
+  - **Today Page Integration**: Wired the component inside the `COMPLETED` state case in `app/today/page.tsx` to automatically trigger when the player completes the final Day 250 logging checklist.
+- **Decisions**: Linked the ending sequence's skip button to transition directly to the final screen for ease of testing. Configured immediate responsiveness to `prefers-reduced-motion` media queries, rendering a static scrollable statistics panel instead of the 20-second fast-forward scrub to maintain strict web accessibility guidelines.
+## Phase 16: Memory & The Archive
+- **Built**: Fully implemented game memory mechanics to make IRIS feel alive and the player's logs permanent:
+  - **Zustand Reflections Store**: Updated `useRunwayStore.ts` with `reflections: Record<number, string>` state and `setReflection(day, text)` action to save player-written signals during the daily ritual. Integrated state clearing into the `resetEntireGame` action.
+  - **The Archive Page (`/archive`)**: Built a quiet, book-like chronological reader page `app/archive/page.tsx` for daily reflections. Features include:
+    - Act boundary chapter headers (Boot, Rendering, Sharpening, High Definition).
+    - Pillar stamps mapping the completed/active pillars for each day.
+    - Future/locked day cards styled with pixel-blur visual filters (`blur-[2px] opacity-40 select-none pointer-events-none`).
+    - Direct access link from the top of the Journey (`/journey`) page.
+  - **IRIS Remembers Greeting Engine**: Integrated past reflection callback lookup inside `app/today/page.tsx` under a deterministic scheduling algorithm (`dayNum % 5 === 2` and `dayNum > 1`):
+    - Priority filters past reflections matching today's lead quest pillar to quote relevant historical logs.
+    - Leverages 10 varied typewriter framing templates delivering organic, non-repetitive dialogue referencing player history.
+    - Implemented a dedicated static calibration greeting on Day 66: *"Sixty-six days. Somewhere around here, science says this stops being effort and starts being you. I've watched it happen. It's happening."*
+- **Decisions**: Preserved the searchless, statless, calm design philosophy in the Archive to match a classic book style. Gracefully fallback to mock journey JSON reflection values if no custom reflection was recorded for that day.

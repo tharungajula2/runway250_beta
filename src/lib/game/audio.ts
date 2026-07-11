@@ -165,3 +165,75 @@ export const triggerHaptic = (ms = 15) => {
     }
   }
 };
+
+let endingDroneOsc: OscillatorNode | null = null;
+let endingDroneGain: GainNode | null = null;
+
+export const startEndingDrone = () => {
+  if (typeof window === "undefined") return;
+  const enabled = useRunwayStore.getState().soundEnabled;
+  if (!enabled) return;
+
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    if (endingDroneOsc) {
+      try {
+        endingDroneOsc.stop();
+      } catch (e) {}
+      endingDroneOsc = null;
+    }
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(90.0, now); // Low 90Hz warm hum
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 1.0); // Gentle 1s fade-in
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.12, now);
+    masterGain.connect(ctx.destination);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.start(now);
+    endingDroneOsc = osc;
+    endingDroneGain = gain;
+  } catch (err) {
+    console.warn("Failed to start ending drone:", err);
+  }
+};
+
+export const stopEndingDrone = () => {
+  if (typeof window === "undefined") return;
+  try {
+    if (endingDroneOsc && endingDroneGain) {
+      if (audioCtx) {
+        const now = audioCtx.currentTime;
+        endingDroneGain.gain.cancelScheduledValues(now);
+        endingDroneGain.gain.setValueAtTime(endingDroneGain.gain.value, now);
+        endingDroneGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5); // Smooth 0.5s fade out
+        
+        const osc = endingDroneOsc;
+        setTimeout(() => {
+          try {
+            osc.stop();
+          } catch (e) {}
+        }, 600);
+      } else {
+        endingDroneOsc.stop();
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to stop ending drone:", err);
+  } finally {
+    endingDroneOsc = null;
+    endingDroneGain = null;
+  }
+};
+

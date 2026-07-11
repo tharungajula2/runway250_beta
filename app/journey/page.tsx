@@ -9,6 +9,7 @@ import { Play, Pause, RotateCcw, Calendar, Flame, Target, Trophy } from "lucide-
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { playSound } from "@/lib/game/audio";
+import Link from "next/link";
 
 const CHAPTERS = [
   { day: 1, name: "Chapter I: Boot Sequence", aside: "First vector placed. The loop begins." },
@@ -88,19 +89,39 @@ export default function Journey() {
       const totalDuration = totalDaysToAnimate * durationPerDay;
 
       startTimeRef.current = performance.now();
+      let lastFrameTime = performance.now();
+      let lastUpdateTimestamp = 0;
+      const frameDeltas: number[] = [];
 
       const animate = (timestamp: number) => {
+        // Measure frame time delta
+        const delta = timestamp - lastFrameTime;
+        lastFrameTime = timestamp;
+        frameDeltas.push(delta);
+        if (frameDeltas.length > 10) frameDeltas.shift();
+
+        // Calculate average frame duration over last 10 frames
+        const avgFrame = frameDeltas.reduce((a, b) => a + b, 0) / frameDeltas.length;
+        
+        // Dynamically choose throttle window (120ms for low fps, 60ms for medium, 16ms for high)
+        const throttleMs = avgFrame > 40 ? 120 : (avgFrame > 25 ? 60 : 16);
+
         const elapsed = timestamp - startTimeRef.current;
         const progress = Math.min(1, totalDuration > 0 ? elapsed / totalDuration : 1);
 
         const easedProgress = easeInOutCubic(progress);
         const nextDay = Math.round(startDay + easedProgress * totalDaysToAnimate);
 
-        setCurrentDay(Math.min(250, nextDay));
+        // Commit page day updates only on throttle window boundaries or completion
+        if (timestamp - lastUpdateTimestamp >= throttleMs || progress === 1) {
+          setCurrentDay(Math.min(250, nextDay));
+          lastUpdateTimestamp = timestamp;
+        }
 
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
         } else {
+          setCurrentDay(250);
           setIsPlaying(false);
         }
       };
@@ -127,13 +148,21 @@ export default function Journey() {
   return (
     <PageTransition>
       <div className="flex flex-col gap-6 py-6 text-left max-w-md mx-auto w-full">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-teal font-heading">
-            The Rendering
-          </h1>
-          <p className="text-xs text-text-muted mt-1">
-            Watch your avatar render in high-definition resolution across 250 days.
-          </p>
+        <div className="flex justify-between items-start gap-4">
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-teal font-heading">
+              The Rendering
+            </h1>
+            <p className="text-xs text-text-muted mt-1 font-sans">
+              Watch your avatar render in high-definition resolution across 250 days.
+            </p>
+          </div>
+          <Link
+            href="/archive"
+            className="shrink-0 text-[10px] font-mono font-bold text-teal hover:text-white border border-teal/20 hover:border-teal hover:bg-teal bg-teal/5 py-1.5 px-3 rounded-lg transition-all active:scale-97 cursor-pointer"
+          >
+            Open the Archive
+          </Link>
         </div>
 
         {/* Main Canvas Display Card */}

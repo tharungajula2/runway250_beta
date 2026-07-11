@@ -23,7 +23,9 @@ interface RunwayState {
   mode: "game" | "pitch";
   soundEnabled: boolean;
   solvedRiddles: Record<number, boolean>;
+  reflections: Record<number, string>; // User reflections
   solveRiddle: (day: number) => void;
+  setReflection: (day: number, text: string) => void;
   setMode: (mode: "game" | "pitch") => void;
   setSoundEnabled: (enabled: boolean) => void;
   setDarkMode: (dark: boolean) => void;
@@ -36,6 +38,7 @@ interface RunwayState {
   updateQuestDescription: (day: number, questId: string, desc: string) => void;
   setSelectedPillars: (pillars: string[]) => void;
   resetSession: () => void;
+  resetEntireGame: () => void;
 }
 
 export const useRunwayStore = create<RunwayState>()(
@@ -51,6 +54,7 @@ export const useRunwayStore = create<RunwayState>()(
       soundEnabled: true, // Default to true
       selectedPillars: ["Body", "Mind", "Craft", "Voice", "Order", "Bonds"], // default all
       solvedRiddles: {},
+      reflections: {},
 
       setMode: (mode) => set({ mode }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
@@ -67,6 +71,14 @@ export const useRunwayStore = create<RunwayState>()(
           solvedRiddles: {
             ...state.solvedRiddles,
             [day]: true,
+          },
+        })),
+
+      setReflection: (day, text) =>
+        set((state) => ({
+          reflections: {
+            ...state.reflections,
+            [day]: text,
           },
         })),
 
@@ -113,9 +125,64 @@ export const useRunwayStore = create<RunwayState>()(
           sessionTimeLeft: 600,
           isSessionLocked: false,
         }),
+
+      resetEntireGame: () =>
+        set({
+          currentDay: 1,
+          liveQuests: {},
+          solvedRiddles: {},
+          reflections: {},
+          isSessionLocked: false,
+          sessionTimeLeft: 600,
+        }),
     }),
     {
       name: "runway-storage",
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        const defaultState = {
+          darkMode: false,
+          liveAI: false,
+          currentDay: 1,
+          sessionTimeLeft: 600,
+          isSessionLocked: false,
+          liveQuests: {},
+          selectedPillars: ["Body", "Mind", "Craft", "Voice", "Order", "Bonds"],
+          mode: "game",
+          soundEnabled: true,
+          solvedRiddles: {},
+          reflections: {},
+        };
+
+        if (!persistedState || typeof persistedState !== "object") {
+          return defaultState;
+        }
+
+        // Merge with defaults to heal missing fields
+        const repaired = { ...defaultState, ...persistedState };
+
+        // Ensure type safety
+        if (typeof repaired.currentDay !== "number" || repaired.currentDay < 1 || repaired.currentDay > 250) {
+          repaired.currentDay = 1;
+        }
+        if (repaired.mode !== "game" && repaired.mode !== "pitch") {
+          repaired.mode = "game";
+        }
+        if (!Array.isArray(repaired.selectedPillars)) {
+          repaired.selectedPillars = defaultState.selectedPillars;
+        }
+        if (typeof repaired.liveQuests !== "object" || repaired.liveQuests === null) {
+          repaired.liveQuests = {};
+        }
+        if (typeof repaired.solvedRiddles !== "object" || repaired.solvedRiddles === null) {
+          repaired.solvedRiddles = {};
+        }
+        if (typeof repaired.reflections !== "object" || repaired.reflections === null) {
+          repaired.reflections = {};
+        }
+
+        return repaired as any;
+      },
     }
   )
 );

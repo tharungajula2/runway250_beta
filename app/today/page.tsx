@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { RIDDLES_BANK } from "@/lib/game/riddles";
 import { playSound, triggerHaptic } from "@/lib/game/audio";
 import ApertureLoader from "@/components/ApertureLoader";
+import EndingSequence from "@/components/EndingSequence";
 
 type LoopState = "QUESTS" | "REFLECTION" | "RESOLVING" | "COMPLETED";
 
@@ -46,6 +47,56 @@ const getGreeting = (act: string, energy: number) => {
   }
 };
 
+const getIrisGreeting = (
+  dayNum: number,
+  energy: number,
+  reflections: Record<number, string>,
+  todayPillar: string
+) => {
+  if (dayNum === 66) {
+    return "Sixty-six days. Somewhere around here, science says this stops being effort and starts being you. I've watched it happen. It's happening.";
+  }
+
+  if (dayNum % 5 === 2 && dayNum > 1) {
+    const pastDays: number[] = [];
+    for (let d = 1; d < dayNum; d++) {
+      pastDays.push(d);
+    }
+
+    if (pastDays.length > 0) {
+      const matchingDays = pastDays.filter((d) => {
+        const dRecord = journeyData.days[d - 1];
+        if (!dRecord) return false;
+        return dRecord.quests.some((q) => q.pillar.toLowerCase() === todayPillar.toLowerCase());
+      });
+
+      const pool = matchingDays.length > 0 ? matchingDays : pastDays;
+      const chosenDay = pool[dayNum % pool.length];
+
+      const text = reflections[chosenDay] || journeyData.days[chosenDay - 1]?.reflection || "Just showing up. That counts.";
+      const chosenRecord = journeyData.days[chosenDay - 1];
+      const chosenAct = chosenRecord ? chosenRecord.act : "Boot";
+
+      const templates = [
+        `On Day ${chosenDay}, you logged: "${text}". Still true. Still enough.`,
+        `Looking back to Day ${chosenDay}, you noted: "${text}". It's still rendering inside you.`,
+        `Remember Day ${chosenDay}? You wrote: "${text}". A solid coordinates marker.`,
+        `Your signal from Day ${chosenDay} was: "${text}". The static was thick, but you wrote signal.`,
+        `Day ${chosenDay} is in the logs. You wrote: "${text}". Let's continue tracing from there.`,
+        `A reflection from Day ${chosenDay}: "${text}". A beautiful vector.`,
+        `You registered this on Day ${chosenDay}: "${text}". A reminder of where you started.`,
+        `In Act ${chosenAct}, Day ${chosenDay}, your entry read: "${text}". Every line is part of the final render.`,
+        `From the archives of Day ${chosenDay}: "${text}". Still true today.`,
+        `On Day ${chosenDay}, you left this record: "${text}". That coordinate is locked in.`,
+      ];
+
+      return templates[dayNum % templates.length];
+    }
+  }
+
+  return getGreeting(journeyData.days[dayNum - 1]?.act || "Boot", energy);
+};
+
 const getActText = (day: number) => {
   if (day <= 50) return "ACT I: BOOT";
   if (day <= 120) return "ACT II: RENDERING";
@@ -67,6 +118,8 @@ export default function Today() {
     selectedPillars,
     solvedRiddles,
     solveRiddle,
+    reflections,
+    setReflection,
   } = useRunwayStore();
 
   const [loopState, setLoopState] = useState<LoopState>("QUESTS");
@@ -88,6 +141,15 @@ export default function Today() {
   const [loadingRiddle, setLoadingRiddle] = useState(false);
   const [riddleMessage, setRiddleMessage] = useState("");
   const riddleInputRef = useRef<HTMLInputElement>(null);
+
+  // Day 250 ending sequence overlay state
+  const [showEndingOverlay, setShowEndingOverlay] = useState(true);
+
+  useEffect(() => {
+    if (currentDay !== 250 || loopState !== "COMPLETED") {
+      setShowEndingOverlay(true);
+    }
+  }, [currentDay, loopState]);
 
   // Get static record for baseline stats
   const dayIndex = currentDay - 1;
@@ -224,7 +286,8 @@ export default function Today() {
 
     const defaultEnergy = staticRecord.energy || 2;
     setEnergyLevel(defaultEnergy);
-    setIrisComment(getGreeting(staticRecord.act, defaultEnergy));
+    const todayPillar = staticRecord.quests[0]?.pillar || "Mind";
+    setIrisComment(getIrisGreeting(currentDay, defaultEnergy, reflections, todayPillar));
 
     if (liveAI) {
       if (!liveQuests[currentDay]) {
@@ -326,6 +389,7 @@ export default function Today() {
   };
 
   const handleCommitReflection = () => {
+    setReflection(currentDay, reflectionText);
     setLoopState("RESOLVING");
     let current = startRes;
     const finalTarget = endRes + (solvedRiddles[currentDay] ? 0.5 : 0.0);
@@ -567,6 +631,10 @@ export default function Today() {
         );
 
       case "COMPLETED":
+        if (currentDay === 250 && showEndingOverlay) {
+          return <EndingSequence onClose={() => setShowEndingOverlay(false)} />;
+        }
+
         const allQuestsDone = questsList.length > 0 && questsList.every((q) => q.done);
         const isRiddleSolved = solvedRiddles[currentDay] || false;
         const riddleBonusVal = isRiddleSolved ? 0.5 : 0.0;
