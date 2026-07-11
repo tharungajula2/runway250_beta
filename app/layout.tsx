@@ -34,7 +34,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: `
           try {
-            const store = JSON.parse(localStorage.getItem('runway250-storage'));
+            const store = JSON.parse(localStorage.getItem('runway-storage'));
             if (store && store.state && store.state.darkMode) {
               document.documentElement.classList.add('dark');
             } else {
