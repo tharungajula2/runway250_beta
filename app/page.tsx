@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Card from "@/components/Card";
+import PixelAvatar from "@/components/PixelAvatar";
 
 export default function Home() {
   return (
@@ -22,23 +25,13 @@ export default function Home() {
         {/* Day 1 Blurry Preview */}
         <div className="flex flex-col items-center gap-2">
           <span className="text-xs font-semibold text-text-muted">Day 1: Blurry Outline</span>
-          <div className="relative w-28 h-28 bg-teal/10 border border-teal/20 rounded-xl overflow-hidden flex items-center justify-center">
-            {/* Blurry SVG/CSS representation */}
-            <div className="w-12 h-12 rounded-full bg-teal opacity-50 blur-lg" />
-            <div className="w-16 h-8 bg-teal-deep opacity-40 blur-md absolute bottom-4" />
-          </div>
+          <PixelAvatar resolutionPct={15} size={112} />
         </div>
 
         {/* Day 250 Crisp Preview */}
         <div className="flex flex-col items-center gap-2">
           <span className="text-xs font-semibold text-teal">Day 250: Rendered</span>
-          <div className="relative w-28 h-28 bg-teal/5 border-2 border-teal rounded-xl overflow-hidden flex items-center justify-center shadow-md">
-            {/* Crisp, geometric clean outline representation */}
-            <div className="w-12 h-12 rounded-full border-2 border-teal bg-teal/20 flex items-center justify-center">
-              <div className="w-6 h-6 rounded-full bg-teal" />
-            </div>
-            <div className="w-16 h-6 border-t-2 border-x-2 border-teal bg-teal/10 absolute bottom-4 rounded-t-md" />
-          </div>
+          <PixelAvatar resolutionPct={98} size={112} />
         </div>
       </div>
 

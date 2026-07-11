@@ -9,6 +9,7 @@ import LiveAIChip from "@/components/LiveAIChip";
 import journeyData from "@/lib/data/journey.json";
 import { ArrowRight, RefreshCw, Smartphone } from "lucide-react";
 import Link from "next/link";
+import PixelAvatar from "@/components/PixelAvatar";
 
 type LoopState = "QUESTS" | "REFLECTION" | "RESOLVING" | "COMPLETED";
 
@@ -199,12 +200,15 @@ export default function Today() {
             <div className="absolute inset-0 bg-paper/40 backdrop-blur-md z-10 pointer-events-none rounded-xl" />
             
             <div className="z-20 flex flex-col items-center gap-4">
-              <RefreshCw size={40} className="text-teal animate-spin" />
-              <h3 className="text-lg font-bold text-teal font-heading">Rendering Avatar Resolution</h3>
-              <p className="text-xs text-text-muted">Consolidating daily habit signals...</p>
+              <PixelAvatar resolutionPct={tickerRes} size={140} className="mb-2" />
+              <div className="flex items-center gap-2">
+                <RefreshCw size={16} className="text-teal animate-spin" />
+                <h3 className="text-sm font-bold text-teal font-heading">Rendering Avatar Resolution</h3>
+              </div>
+              <p className="text-[11px] text-text-muted">Consolidating daily habit signals...</p>
               
-              <div className="mt-6 flex flex-col items-center">
-                <span className="text-5xl font-extrabold text-teal font-heading tabular-nums">
+              <div className="mt-4 flex flex-col items-center">
+                <span className="text-4xl font-extrabold text-teal font-heading tabular-nums">
                   {tickerRes.toFixed(1)}%
                 </span>
                 <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted mt-2">
