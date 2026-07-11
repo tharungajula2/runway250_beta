@@ -17,6 +17,7 @@ interface RunwayState {
   sessionTimeLeft: number; // in seconds, default 600 (10 minutes)
   isSessionLocked: boolean;
   liveQuests: Record<number, Quest[]>; // Stores live-generated quests per day
+  selectedPillars: string[]; // User chosen focus pillars
   setDarkMode: (dark: boolean) => void;
   setLiveAI: (live: boolean) => void;
   setCurrentDay: (day: number) => void;
@@ -24,6 +25,7 @@ interface RunwayState {
   setSessionLocked: (locked: boolean) => void;
   setLiveQuestsForDay: (day: number, quests: Quest[]) => void;
   toggleLiveQuestDone: (day: number, questId: string) => void;
+  setSelectedPillars: (pillars: string[]) => void;
   resetSession: () => void;
 }
 
@@ -36,6 +38,7 @@ export const useRunwayStore = create<RunwayState>()(
       sessionTimeLeft: 600,
       isSessionLocked: false,
       liveQuests: {},
+      selectedPillars: ["Body", "Mind", "Craft", "Voice", "Order", "Bonds"], // default all
 
       setDarkMode: (dark) => set({ darkMode: dark }),
       setLiveAI: (live) => set({ liveAI: live }),
@@ -67,6 +70,8 @@ export const useRunwayStore = create<RunwayState>()(
             },
           };
         }),
+
+      setSelectedPillars: (pillars) => set({ selectedPillars: pillars }),
 
       resetSession: () =>
         set({

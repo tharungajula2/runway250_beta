@@ -21,6 +21,30 @@ interface QuestTileProps {
   disabled?: boolean;
 }
 
+function cleanAnchor(str: string): string {
+  let cleaned = (str || "").trim();
+  if (cleaned.toLowerCase().startsWith("after i ")) {
+    cleaned = cleaned.substring(8);
+  } else if (cleaned.toLowerCase().startsWith("after ")) {
+    cleaned = cleaned.substring(6);
+  }
+  return cleaned;
+}
+
+function cleanText(str: string): string {
+  let cleaned = (str || "").trim();
+  if (cleaned.toLowerCase().startsWith("i will ")) {
+    cleaned = cleaned.substring(7);
+  } else if (cleaned.toLowerCase().startsWith("will ")) {
+    cleaned = cleaned.substring(5);
+  }
+  // Strip trailing periods if they will be followed by punctuation
+  if (cleaned.endsWith(".")) {
+    cleaned = cleaned.slice(0, -1);
+  }
+  return cleaned;
+}
+
 export default function QuestTile({
   pillar,
   tier,
@@ -37,6 +61,9 @@ export default function QuestTile({
     Standard: "bg-teal-deep/10 text-teal border-teal-deep/20",
     Hard: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   };
+
+  const displayAnchor = cleanAnchor(anchor);
+  const displayText = cleanText(text);
 
   return (
     <Card
@@ -59,7 +86,7 @@ export default function QuestTile({
           </div>
 
           <p className="text-xs text-text-muted leading-relaxed">
-            After I <span className="font-semibold text-text-primary underline decoration-teal/40 decoration-2">{anchor}</span>, I will <span className="font-semibold text-text-primary">{text}</span>.
+            After I <span className="font-semibold text-text-primary underline decoration-teal/40 decoration-2">{displayAnchor}</span>, I will <span className="font-semibold text-text-primary">{displayText}</span>.
           </p>
         </div>
 

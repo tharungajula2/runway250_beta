@@ -19,11 +19,11 @@ const PILLAR_DETAILS: Record<Pillar, { label: string; icon: any; desc: string }>
 
 export default function Onboarding() {
   const router = useRouter();
-  const { setCurrentDay, resetSession } = useRunwayStore();
+  const { setCurrentDay, resetSession, liveAI, setSelectedPillars } = useRunwayStore();
   const [step, setStep] = useState(1);
 
   // Step 1: Selected Pillars
-  const [selectedPillars, setSelectedPillars] = useState<Record<Pillar, boolean>>({
+  const [selectedPillars, setSelectedPillarsState] = useState<Record<Pillar, boolean>>({
     Body: true,
     Mind: true,
     Craft: true,
@@ -45,9 +45,10 @@ export default function Onboarding() {
   // Step 3: Animation logs
   const [generationLog, setGenerationLog] = useState<string>("Analyzing selected focus pillars...");
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [liveTestQuest, setLiveTestQuest] = useState<any>(null);
 
   const togglePillar = (pillar: Pillar) => {
-    setSelectedPillars(prev => ({
+    setSelectedPillarsState(prev => ({
       ...prev,
       [pillar]: !prev[pillar]
     }));
@@ -64,32 +65,115 @@ export default function Onboarding() {
   useEffect(() => {
     if (step !== 3) return;
 
-    const logs = [
-      "Analyzing selected focus pillars...",
-      "Measuring initial baseline static...",
-      "Structuring 250 daily quest blocks...",
-      "Wiring up Fogg anchor intentions...",
-      "Seeding 2 Duolingo-style streak freezes...",
-      "Generating your custom Runway arc..."
-    ];
+    let isSubscribed = true;
 
-    let currentLogIndex = 0;
-    const interval = setInterval(() => {
-      currentLogIndex++;
-      if (currentLogIndex < logs.length) {
-        setGenerationLog(logs[currentLogIndex]);
-        setGenerationProgress(prev => prev + 16);
-      } else {
-        setGenerationProgress(100);
-        setGenerationLog("Runway initialized successfully.");
+    if (liveAI) {
+      setGenerationLog("Initiating live Quest Master validation...");
+      setGenerationProgress(10);
+
+      const runLiveAIOnboarding = async () => {
+        const activePillars = (Object.keys(selectedPillars) as Pillar[]).filter(k => selectedPillars[k]);
+        
+        try {
+          if (isSubscribed) {
+            setGenerationLog("Reaching Gemini API via server route...");
+            setGenerationProgress(30);
+          }
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+          const res = await fetch("/api/quest", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pillars: activePillars,
+              recentHistory: "Day 0: No prior history. User has just completed onboarding and selected focus pillars.",
+              energy: 2
+            }),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!res.ok) throw new Error("API Route failure");
+
+          const data = await res.json();
+          if (isSubscribed) {
+            setGenerationLog("Personalized quest received. Parsing parameters...");
+            setGenerationProgress(70);
+          }
+
+          if (data.quests && data.quests.length > 0) {
+            if (isSubscribed) {
+              setLiveTestQuest(data.quests[0]);
+              setGenerationLog("Gemini Quest Master initialized.");
+              setGenerationProgress(100);
+            }
+          } else {
+            throw new Error("No quests returned");
+          }
+        } catch (err) {
+          console.warn("Onboarding live AI call failed or timed out. Falling back silently.", err);
+          if (isSubscribed) {
+            setGenerationLog("API offline or slow. Falling back to local offline generation...");
+            setGenerationProgress(50);
+            setTimeout(() => {
+              if (isSubscribed) {
+                setGenerationLog("Calibrating 250 offline milestones...");
+                setGenerationProgress(80);
+                setTimeout(() => {
+                  if (isSubscribed) {
+                    setGenerationLog("Runway initialized offline successfully.");
+                    setGenerationProgress(100);
+                  }
+                }, 600);
+              }
+            }, 800);
+          }
+        }
+      };
+
+      runLiveAIOnboarding();
+    } else {
+      const logs = [
+        "Analyzing selected focus pillars...",
+        "Measuring initial baseline static...",
+        "Structuring 250 daily quest blocks...",
+        "Wiring up Fogg anchor intentions...",
+        "Seeding 2 Duolingo-style streak freezes...",
+        "Generating your custom Runway arc..."
+      ];
+
+      let currentLogIndex = 0;
+      const interval = setInterval(() => {
+        currentLogIndex++;
+        if (currentLogIndex < logs.length) {
+          setGenerationLog(logs[currentLogIndex]);
+          setGenerationProgress(prev => prev + 16);
+        } else {
+          setGenerationProgress(100);
+          setGenerationLog("Runway initialized successfully.");
+          clearInterval(interval);
+        }
+      }, 600);
+
+      return () => {
+        isSubscribed = false;
         clearInterval(interval);
-      }
-    }, 600);
+      };
+    }
 
-    return () => clearInterval(interval);
-  }, [step]);
+    return () => {
+      isSubscribed = false;
+    };
+  }, [step, liveAI]);
 
   const handleCompleteSetup = () => {
+    // Save selected pillars to store
+    const active = (Object.keys(selectedPillars) as Pillar[]).filter(k => selectedPillars[k]);
+    setSelectedPillars(active);
+
     // Reset to Day 1 for active play!
     setCurrentDay(1);
     resetSession();
@@ -230,11 +314,11 @@ export default function Onboarding() {
                 />
               </div>
               
-              <p className="text-xs font-mono text-teal-deep h-8">{generationLog}</p>
+              <p className="text-xs font-mono text-teal-deep h-8 px-4">{generationLog}</p>
             </div>
 
             {generationProgress === 100 && (
-              <div className="flex flex-col gap-4 max-w-sm mx-auto">
+              <div className="flex flex-col gap-4 max-w-sm mx-auto w-full px-2">
                 <Card variant="pixel" className="p-4 bg-teal/5 border-teal text-left flex flex-col gap-2">
                   <h4 className="font-bold text-xs text-teal">Runway Parameters</h4>
                   <ul className="text-[11px] text-text-muted space-y-1.5 list-disc pl-4">
@@ -244,6 +328,19 @@ export default function Onboarding() {
                     <li>Streak Freezes: 2 loaded</li>
                   </ul>
                 </Card>
+
+                {liveTestQuest && (
+                  <Card variant="default" className="p-3 border-teal/20 bg-teal/5 text-left flex flex-col gap-1.5 border">
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-block w-1.5 h-1.5 bg-teal rounded-full animate-pulse" />
+                      <h5 className="font-bold text-[10px] text-teal uppercase tracking-wider">Live Quest Sample Created</h5>
+                    </div>
+                    <p className="text-[11px] text-text-muted leading-relaxed">
+                      Pillar: <span className="font-bold text-text-primary">{liveTestQuest.pillar}</span> ({liveTestQuest.tier})<br/>
+                      After I <span className="underline decoration-teal/30">{liveTestQuest.anchor}</span>, I will <span className="text-text-primary font-medium">{liveTestQuest.text}</span>.
+                    </p>
+                  </Card>
+                )}
 
                 <button
                   onClick={handleCompleteSetup}

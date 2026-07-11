@@ -23,12 +23,15 @@ export default function Today() {
     isSessionLocked,
     setSessionLocked,
     sessionTimeLeft,
+    selectedPillars,
   } = useRunwayStore();
 
   const [loopState, setLoopState] = useState<LoopState>("QUESTS");
   const [questsList, setQuestsList] = useState<any[]>([]);
   const [reflectionText, setReflectionText] = useState("");
   const [tickerRes, setTickerRes] = useState(0);
+  const [loadingLive, setLoadingLive] = useState(false);
+  const [energyLevel, setEnergyLevel] = useState<number>(2);
 
   // Get static record for baseline stats
   const dayIndex = currentDay - 1;
@@ -38,25 +41,99 @@ export default function Today() {
   const startRes = prevRecord ? prevRecord.resolutionPct : 0.0;
   const endRes = staticRecord.resolutionPct;
 
-  // 1. Initialize quests list on mount or when day/mode changes
+  const fetchLiveQuests = async (energyVal = energyLevel) => {
+    setLoadingLive(true);
+    
+    // Get recent history (previous 7 days)
+    const prevDays = journeyData.days.slice(
+      Math.max(0, currentDay - 8),
+      Math.max(0, currentDay - 1)
+    );
+    const recentHistory = prevDays
+      .map((d: any) => `Day ${d.day}: ${d.quests.filter((q: any) => q.done).map((q: any) => q.text).join(", ")}`)
+      .join("\n");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    try {
+      const activePillars = selectedPillars && selectedPillars.length > 0
+        ? selectedPillars
+        : ["Body", "Mind", "Craft", "Voice", "Order", "Bonds"];
+
+      const res = await fetch("/api/quest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pillars: activePillars,
+          recentHistory: recentHistory || "Day 0: No prior history.",
+          energy: energyVal,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) throw new Error(`API error: status ${res.status}`);
+
+      const data = await res.json();
+      if (data.quests && Array.isArray(data.quests)) {
+        // Normalize
+        const normalized = data.quests.map((q: any, idx: number) => {
+          let pillar = q.pillar;
+          const match = ["Body", "Mind", "Craft", "Voice", "Order", "Bonds"].find(
+            (p) => p.toLowerCase() === pillar.toLowerCase()
+          );
+          pillar = match || "Mind";
+
+          let tier = q.tier;
+          const tierMatch = ["Tiny", "Standard", "Hard"].find(
+            (t) => t.toLowerCase() === tier.toLowerCase()
+          );
+          tier = tierMatch || "Standard";
+
+          return {
+            id: `live-${currentDay}-${idx}-${Date.now()}`,
+            pillar,
+            tier,
+            text: q.text || "Do a quick focus check",
+            anchor: q.anchor || "I open my eyes",
+            done: false,
+          };
+        });
+
+        setLiveQuestsForDay(currentDay, normalized);
+        setQuestsList(normalized);
+      } else {
+        throw new Error("Invalid structure returned");
+      }
+    } catch (err: any) {
+      console.warn("QUEST_API_FALLBACK_TRIGGERED:", err.message || err);
+      // Fallback silently to static quests
+      const fallbackQuests = staticRecord.quests.map((q: any) => ({
+        ...q,
+        done: false,
+      }));
+      setQuestsList(fallbackQuests);
+    } finally {
+      setLoadingLive(false);
+    }
+  };
+
+  // Sync energy level and load quests on day/liveAI change
   useEffect(() => {
-    // If the session is already locked for this day, default to completed screen
     if (isSessionLocked) {
       setLoopState("COMPLETED");
     } else {
       setLoopState("QUESTS");
     }
 
+    const defaultEnergy = staticRecord.energy || 2;
+    setEnergyLevel(defaultEnergy);
+
     if (liveAI) {
-      // Check if we have live quests for this day
       if (!liveQuests[currentDay]) {
-        // Build live quests from static ones on first load of the day (simulated)
-        const mockLiveQuests = staticRecord.quests.map((q: any) => ({
-          ...q,
-          done: false, // Start fresh for live tracking
-        }));
-        setLiveQuestsForDay(currentDay, mockLiveQuests);
-        setQuestsList(mockLiveQuests);
+        fetchLiveQuests(defaultEnergy);
       } else {
         setQuestsList(liveQuests[currentDay]);
       }
@@ -70,7 +147,7 @@ export default function Today() {
     }
 
     setReflectionText(staticRecord.reflection);
-  }, [currentDay, liveAI, isSessionLocked, liveQuests, staticRecord, setLiveQuestsForDay]);
+  }, [currentDay, liveAI, isSessionLocked, staticRecord]);
 
   // Handle toggling completion of a quest
   const handleToggleQuest = (questId: string) => {
@@ -120,6 +197,18 @@ export default function Today() {
   const renderContent = () => {
     switch (loopState) {
       case "QUESTS":
+        if (loadingLive) {
+          return (
+            <div className="flex flex-col gap-6 py-12 items-center justify-center text-center">
+              <RefreshCw size={36} className="text-teal animate-spin mb-2" />
+              <h3 className="font-bold text-teal text-sm">Consulting the AI Quest Master...</h3>
+              <p className="text-[11px] text-text-muted max-w-xs leading-relaxed">
+                Structuring personalized intentions for Day {currentDay} using Gemini Flash...
+              </p>
+            </div>
+          );
+        }
+
         return (
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-1 text-left">
@@ -132,9 +221,37 @@ export default function Today() {
               <h2 className="text-xl font-black text-teal font-heading">
                 Day {currentDay} of 250
               </h2>
-              <p className="text-xs text-text-muted">
-                Energy Level: {staticRecord.energy === 1 ? "Low (1 Quest)" : staticRecord.energy === 2 ? "Mid (2 Quests)" : "High (3 Quests)"}
-              </p>
+              
+              {/* Interactive energy selection for live validation and demo */}
+              {liveAI ? (
+                <div className="mt-1 flex flex-col gap-1.5 border border-teal/10 bg-teal/5 p-2.5 rounded-lg text-left">
+                  <span className="text-[9px] uppercase font-bold tracking-wider text-teal">
+                    Simulate Energy Level:
+                  </span>
+                  <div className="flex gap-2">
+                    {[1, 2, 3].map((lvl) => (
+                      <button
+                        key={lvl}
+                        onClick={() => {
+                          setEnergyLevel(lvl);
+                          fetchLiveQuests(lvl);
+                        }}
+                        className={`flex-1 text-[10px] py-1 rounded font-bold border transition-all duration-200 ${
+                          energyLevel === lvl
+                            ? "bg-teal text-white border-teal shadow-sm"
+                            : "bg-white text-text-muted border-[var(--border-color)] hover:border-teal/30"
+                        }`}
+                      >
+                        {lvl === 1 ? "1 (Low / Tiny)" : lvl === 2 ? "2 (Mid)" : "3 (High)"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-text-muted">
+                  Energy Level: {staticRecord.energy === 1 ? "Low (1 Quest)" : staticRecord.energy === 2 ? "Mid (2 Quests)" : "High (3 Quests)"}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-3">
@@ -150,6 +267,19 @@ export default function Today() {
                 />
               ))}
             </div>
+
+            {liveAI && (
+              <div className="flex justify-end -mt-2">
+                <button
+                  onClick={() => fetchLiveQuests(energyLevel)}
+                  disabled={loadingLive}
+                  className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-teal hover:text-teal-deep disabled:opacity-50"
+                >
+                  <RefreshCw size={10} className={loadingLive ? "animate-spin" : ""} />
+                  Regenerate with Gemini
+                </button>
+              </div>
+            )}
 
             <button
               onClick={handleProceedToReflection}
