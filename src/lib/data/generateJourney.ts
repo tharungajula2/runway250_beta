@@ -15,6 +15,7 @@ interface Quest {
   text: string;
   anchor: string;
   done: boolean;
+  isHunt?: boolean;
 }
 
 interface DayRecord {
@@ -241,6 +242,19 @@ const MILESTONES: Record<number, { title: string; message: string }> = {
   250: { title: "Runway complete", message: "Day 1 you couldn't see yourself. Look now." }
 };
 
+const HUNT_TEMPLATES = [
+  { text: "Find something within 100 steps of your door that you've never actually looked at. Describe it in one line.", anchor: "After I step outside" },
+  { text: "Find the oldest object in your home. One line: its story.", anchor: "After I look around my room" },
+  { text: "Find a patch of green or soil outside. One line: what is growing there.", anchor: "After I walk out the front door" },
+  { text: "Find a discarded item on your walk. One line: what was it?", anchor: "After I reach the corner" },
+  { text: "Find a pattern of shadows or light in your room. One line: what cast it?", anchor: "After I sit in stillness" },
+  { text: "Find an object that makes you feel quiet. One line: why.", anchor: "After I look on my desk" },
+  { text: "Find the smallest living thing you can see outside. One line: describe it.", anchor: "After I look down at the grass" },
+  { text: "Find something textured (rough, smooth, cold). One line: how it feels.", anchor: "After I touch the surface" },
+  { text: "Find a book you haven't opened in years. One line: its title.", anchor: "After I stand by the shelf" },
+  { text: "Find a spot where you can hear the wind. One line: describe the sound.", anchor: "After I open the window" }
+];
+
 // ---------------------------------------------------------
 // RUNWAY GENERATOR ENGINE
 // ---------------------------------------------------------
@@ -325,14 +339,30 @@ function runSimulation(probScale: number, rng: SeededRandom): DayRecord[] {
       const pillar = shuffledPillars[index % shuffledPillars.length];
       const pool = QUESTS_POOL[pillar][tier];
       const template = rng.pick(pool);
-      quests.push({
-        id: `day-${day}-${tier}-${index}`,
-        pillar,
-        tier,
-        text: template.text,
-        anchor: template.anchor,
-        done: false
-      });
+      
+      // 10% chance to be a Hunt quest
+      const isHunt = rng.next() < 0.10;
+      if (isHunt) {
+        const huntTemplate = rng.pick(HUNT_TEMPLATES);
+        quests.push({
+          id: `day-${day}-${tier}-${index}`,
+          pillar,
+          tier,
+          text: huntTemplate.text,
+          anchor: huntTemplate.anchor,
+          done: false,
+          isHunt: true
+        });
+      } else {
+        quests.push({
+          id: `day-${day}-${tier}-${index}`,
+          pillar,
+          tier,
+          text: template.text,
+          anchor: template.anchor,
+          done: false
+        });
+      }
     });
 
     // Update yesterday's primary pillar

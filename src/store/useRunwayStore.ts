@@ -8,6 +8,8 @@ export interface Quest {
   text: string;
   anchor: string;
   done: boolean;
+  isHunt?: boolean;
+  description?: string;
 }
 
 interface RunwayState {
@@ -18,6 +20,12 @@ interface RunwayState {
   isSessionLocked: boolean;
   liveQuests: Record<number, Quest[]>; // Stores live-generated quests per day
   selectedPillars: string[]; // User chosen focus pillars
+  mode: "game" | "pitch";
+  soundEnabled: boolean;
+  solvedRiddles: Record<number, boolean>;
+  solveRiddle: (day: number) => void;
+  setMode: (mode: "game" | "pitch") => void;
+  setSoundEnabled: (enabled: boolean) => void;
   setDarkMode: (dark: boolean) => void;
   setLiveAI: (live: boolean) => void;
   setCurrentDay: (day: number) => void;
@@ -25,6 +33,7 @@ interface RunwayState {
   setSessionLocked: (locked: boolean) => void;
   setLiveQuestsForDay: (day: number, quests: Quest[]) => void;
   toggleLiveQuestDone: (day: number, questId: string) => void;
+  updateQuestDescription: (day: number, questId: string, desc: string) => void;
   setSelectedPillars: (pillars: string[]) => void;
   resetSession: () => void;
 }
@@ -38,8 +47,13 @@ export const useRunwayStore = create<RunwayState>()(
       sessionTimeLeft: 600,
       isSessionLocked: false,
       liveQuests: {},
+      mode: "game", // Default is Game Mode
+      soundEnabled: true, // Default to true
       selectedPillars: ["Body", "Mind", "Craft", "Voice", "Order", "Bonds"], // default all
+      solvedRiddles: {},
 
+      setMode: (mode) => set({ mode }),
+      setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setDarkMode: (dark) => set({ darkMode: dark }),
       setLiveAI: (live) => set({ liveAI: live }),
       setCurrentDay: (day) => set({ currentDay: day }),
@@ -48,6 +62,13 @@ export const useRunwayStore = create<RunwayState>()(
           sessionTimeLeft: typeof time === "function" ? time(state.sessionTimeLeft) : time,
         })),
       setSessionLocked: (locked) => set({ isSessionLocked: locked }),
+      solveRiddle: (day) =>
+        set((state) => ({
+          solvedRiddles: {
+            ...state.solvedRiddles,
+            [day]: true,
+          },
+        })),
 
       setLiveQuestsForDay: (day, quests) =>
         set((state) => ({
@@ -62,6 +83,20 @@ export const useRunwayStore = create<RunwayState>()(
           const dayQuests = state.liveQuests[day] || [];
           const updatedQuests = dayQuests.map((q) =>
             q.id === questId ? { ...q, done: !q.done } : q
+          );
+          return {
+            liveQuests: {
+              ...state.liveQuests,
+              [day]: updatedQuests,
+            },
+          };
+        }),
+
+      updateQuestDescription: (day, questId, desc) =>
+        set((state) => {
+          const dayQuests = state.liveQuests[day] || [];
+          const updatedQuests = dayQuests.map((q) =>
+            q.id === questId ? { ...q, description: desc } : q
           );
           return {
             liveQuests: {

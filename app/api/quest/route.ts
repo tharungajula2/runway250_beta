@@ -33,6 +33,7 @@ export async function POST(req: Request) {
               tier: { type: "string" }, // Tiny | Standard | Hard
               text: { type: "string" },
               anchor: { type: "string" },
+              isHunt: { type: "boolean" },
             },
             required: ["pillar", "tier", "text", "anchor"],
           },

@@ -5,6 +5,8 @@ import Card from "@/components/Card";
 import PixelAvatar from "@/components/PixelAvatar";
 import PageTransition from "@/components/PageTransition";
 
+import { LEXICON } from "@/lib/game/lexicon";
+
 export default function Home() {
   return (
     <PageTransition>
@@ -15,7 +17,7 @@ export default function Home() {
             Runway 250
           </h1>
           <p className="text-sm font-semibold tracking-wider text-teal-deep uppercase">
-            A 250-Day Behavior Science Experiment
+            {LEXICON.subtitle}
           </p>
           <p className="text-base text-text-muted max-w-md mx-auto leading-relaxed mt-2">
             On Day 1, you cannot see yourself. Every day you show up for your real life, you render your avatar into high definition.
@@ -66,10 +68,10 @@ export default function Home() {
           <Card variant="surface" className="flex flex-col gap-1 p-4">
             <div className="flex items-center gap-2">
               <span className="text-teal font-extrabold text-base">③</span>
-              <h4 className="font-bold text-sm text-teal font-heading">Ethical Forgiveness</h4>
+              <h4 className="font-bold text-sm text-teal font-heading">Shields</h4>
             </div>
             <p className="text-xs text-text-muted leading-relaxed pl-6">
-              Streak freezes absorb missed days automatically. Designed to bend, not break your habit momentum.
+              Shields absorb missed days automatically. Designed to bend, not break your momentum.
             </p>
           </Card>
         </div>
@@ -83,7 +85,7 @@ export default function Home() {
             Enter the Runway
           </Link>
           <span className="text-[10px] text-text-muted mt-2">
-            Takes ~2 minutes • Fully local database
+            Takes ~2 minutes • Runs locally
           </span>
         </div>
       </div>

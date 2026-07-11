@@ -1,3 +1,5 @@
+"use client";
+
 import Card from "@/components/Card";
 import PageTransition from "@/components/PageTransition";
 

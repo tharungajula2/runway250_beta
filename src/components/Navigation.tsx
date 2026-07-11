@@ -4,21 +4,28 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Compass, TrendingUp, Coins, Settings } from "lucide-react";
 
+import { useRunwayStore } from "@/store/useRunwayStore";
+
 export default function Navigation() {
   const pathname = usePathname();
+  const { mode } = useRunwayStore();
 
   // Hide nav on landing and onboarding screens
   if (pathname === "/" || pathname === "/onboarding") {
     return null;
   }
 
-  const navItems = [
+  const allNavItems = [
     { label: "Today", href: "/today", icon: CalendarDays },
     { label: "Journey", href: "/journey", icon: Compass },
     { label: "Metrics", href: "/analytics", icon: TrendingUp },
     { label: "Business", href: "/business", icon: Coins },
     { label: "Settings", href: "/settings", icon: Settings },
   ];
+
+  const navItems = mode === "pitch" 
+    ? allNavItems 
+    : allNavItems.filter(item => item.href === "/today" || item.href === "/journey" || item.href === "/settings");
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[520px] bg-white/80 dark:bg-dark-surface/85 backdrop-blur-md border-t border-[var(--border-color)] px-4 py-2.5 flex items-center justify-around z-50 transition-all duration-300">

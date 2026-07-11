@@ -1,7 +1,25 @@
+"use client";
+
 import Card from "@/components/Card";
 import PageTransition from "@/components/PageTransition";
+import { useRunwayStore } from "@/store/useRunwayStore";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Business() {
+  const { mode } = useRunwayStore();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (mode !== "pitch") {
+      router.replace("/journey");
+    }
+  }, [mode, router]);
+
+  if (mode !== "pitch") {
+    return null;
+  }
+
   return (
     <PageTransition>
       <div className="flex flex-col gap-6 py-6 text-left max-w-xl mx-auto w-full">

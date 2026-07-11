@@ -1,6 +1,7 @@
 import React from "react";
+import { motion } from "framer-motion";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardProps extends React.ComponentPropsWithoutRef<typeof motion.div> {
   children: React.ReactNode;
   variant?: "default" | "surface" | "pixel";
 }
@@ -15,8 +16,8 @@ export default function Card({ children, variant = "default", className = "", ..
   };
 
   return (
-    <div className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>
+    <motion.div className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>
       {children}
-    </div>
+    </motion.div>
   );
 }

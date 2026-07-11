@@ -94,7 +94,9 @@ export default function PixelAvatar({
       {/* Loading state indicator */}
       {!imageLoaded && (
         <div className="absolute inset-0 bg-neutral-100 dark:bg-neutral-900 rounded-xl flex items-center justify-center">
-          <div className="w-5 h-5 border-2 border-teal border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border border-teal/30 rounded-full flex items-center justify-center animate-pulse">
+            <div className="w-2 h-2 rounded-full bg-teal" />
+          </div>
         </div>
       )}
     </div>

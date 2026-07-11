@@ -25,21 +25,24 @@ import {
   ReferenceDot,
 } from "recharts";
 import { TrendingUp, Users, Target, Activity, Flame, ShieldAlert } from "lucide-react";
+import { useRunwayStore } from "@/store/useRunwayStore";
+import { useRouter } from "next/navigation";
 
 export default function Analytics() {
   const [mounted, setMounted] = useState(false);
+  const { mode } = useRunwayStore();
+  const router = useRouter();
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (mode !== "pitch") {
+      router.replace("/journey");
+    } else {
+      setMounted(true);
+    }
+  }, [mode, router]);
 
-  if (!mounted) {
-    return (
-      <div className="flex flex-col flex-1 items-center justify-center py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-xs text-text-muted">Loading behavior analytics...</p>
-      </div>
-    );
+  if (!mounted || mode !== "pitch") {
+    return null;
   }
 
   // 1. Resolution growth chart data (downsampled to every 10th day to prevent SVG noise, including Day 250)
