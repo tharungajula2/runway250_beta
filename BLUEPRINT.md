@@ -1,4 +1,7 @@
 # BLUEPRINT.md — **Runway 250**
+
+> **Historical build specification.** This document records earlier product research and build intentions; it is not a source-verified description of every feature in the current application. See [PROJECT_BLUEPRINT.md](PROJECT_BLUEPRINT.md) for the current implementation guide and [README.md](README.md) for the project overview.
+
 ### Master Build Specification for an AI Coding Agent (Google Antigravity)
 **A local-first, installable PWA. A 250-day "life-as-a-game" experience. Current as of July 11, 2026.**
 
