@@ -19,7 +19,7 @@ Runway 250 is an installable web prototype for turning daily actions into a visu
 
 ## How the prototype behaves
 
-The application is a **demonstration, not a live habit-tracking service**. Its 250-day history is generated deterministically and stored in [`src/lib/data/journey.json`](src/lib/data/journey.json). Scrubbing or playing the journey previews that fixed sample. Current quest interactions, reflections, preferences, and riddle completion are stored in the browser through Zustand persistence; they do not recalculate the sample's historical XP, streak, or analytics.
+The application is a **demonstration, not a live habit-tracking service**. Its 250-day history is generated deterministically and stored in [`src/lib/data/journey.json`](src/lib/data/journey.json). Scrubbing or playing the journey previews that fixed sample. Reflections, preferences, riddle completion, and live-generated quests are stored in the browser through Zustand persistence. In fallback mode, quest completion only affects the current screen. Neither path recalculates the sample's historical XP, streak, or analytics.
 
 There is no account system, server database, cross-device sync, payment flow, or evidence of real users. The analytics and business pages identify their data and prices as simulated or proposed. The repository's `BUILDLOG.md` mentions `https://runway250-beta.vercel.app`; that deployment URL was **not verified as reachable** during this review.
 
